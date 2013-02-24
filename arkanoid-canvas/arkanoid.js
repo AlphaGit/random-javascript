@@ -145,9 +145,20 @@ function ArkanoidPlayer(drawingContext, color, gridCalculator) {
 	};
 
 	self.centerPlayer();
+
+	var getCornerX = function() {
+		return self.cornerX;
+	};
+
+	var getCornerY = function() {
+		return self.cornerY;
+	};
+
 	return {
 		draw: self.draw,
-		centerPlayer: self.centerPlayer
+		centerPlayer: self.centerPlayer,
+		getCornerX: getCornerX,
+		getCornerY: getCornerY
 	};
 }
 
@@ -184,6 +195,66 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 		return stageWidth - radius <= self.centerX;
 	};
 
+	var hitsBlockTop = function(blockX, blockY, blockHeight, blockWidth) {
+		// ball center needs to be in the triangular section between the block center and the top edge
+		var limitRight = blockX + blockWidth + radius;
+		var limitLeft = blockX - radius;
+		var limitTop = blockY - radius;
+		var limitBottom = blockY + blockHeight / 2;
+
+		var pointA = new Point(limitLeft, limitTop);
+		var pointB = new Point(limitRight, limitTop);
+		var pointC = new Point((limitLeft + limitRight) / 2, limitBottom);
+
+		var topTriangle = new Triangle(pointA, pointB, pointC);
+		return topTriangle.isInside(new Point(self.centerX, self.centerY));
+	};
+
+	var hitsBlockBottom = function(blockX, blockY, blockHeight, blockWidth) {
+		// ball center needs to be in the triangular section between the block center and the bottom edge
+		var limitRight = blockX + blockWidth + radius;
+		var limitLeft = blockX - radius;
+		var limitTop = blockY + blockHeight / 2;
+		var limitBottom = blockY + blockHeight;
+
+		var pointA = new Point(limitLeft, limitBottom);
+		var pointB = new Point((limitLeft + limitRight) / 2, limitTop);
+		var pointC = new Point(limitRight, limitBottom);
+
+		var bottomTriangle = new Triangle(pointA, pointB, pointC);
+		return bottomTriangle.isInside(new Point(self.centerX, self.centerY));
+	};
+
+	var hitsBlockLeft = function(blockX, blockY, blockHeight, blockWidth) {
+		// ball center needs to be in the triangular section between the block center and the left edge
+		var limitLeft = blockX;
+		var limitRight = blockX + blockWidth / 2;
+		var limitTop = blockY;
+		var limitBottom = blockY + blockHeight;
+
+		var pointA = new Point(limitLeft, limitTop);
+		var pointB = new Point(limitRight, (limitTop + limitBottom) / 2);
+		var pointC = new Point(limitLeft, limitBottom);
+
+		var leftTriangle = new Triangle(pointA, pointB, pointC);
+		return leftTriangle.isInside(new Point(self.centerX, self.centerY));
+	};
+
+	var hitsBlockRight = function(blockX, blockY, blockHeight, blockWidth) {
+		// ball center needs to be in the triangular section between the block center and the right edge
+		var limitLeft = blockX + blockWidth / 2;
+		var limitRight = blockX + blockWidth;
+		var limitTop = blockY;
+		var limitBottom = blockY + blockHeight;
+
+		var pointA = new Point(limitLeft, (limitTop + limitBottom) / 2);
+		var pointB = new Point(limitRight, limitTop);
+		var pointC = new Point(limitRight, limitBottom);
+
+		var rightTriangle = new Triangle(pointA, pointB, pointC);
+		return rightTriangle.isInside(new Point(self.centerX, self.centerY));
+	};
+
 	return {
 		centerBall: self.centerBall,
 		draw: self.draw,
@@ -191,7 +262,11 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 		hitsBottom: hitsBottom,
 		hitsTop: hitsTop,
 		hitsLeft: hitsLeft,
-		hitsRight: hitsRight
+		hitsRight: hitsRight,
+		hitsBlockTop: hitsBlockTop,
+		hitsBlockRight: hitsBlockRight,
+		hitsBlockBottom: hitsBlockBottom,
+		hitsBlockLeft: hitsBlockLeft
 	};
 }
 
@@ -218,6 +293,17 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		if (ball.hitsTop()) self.ballDirection.dY = 1;
 		if (ball.hitsRight()) self.ballDirection.dX = -1;
 		if (ball.hitsLeft()) self.ballDirection.dX = 1;
+
+		var pX = player.getCornerX();
+		var pY = player.getCornerY();
+		var pH = gridCalculator.getBlockHeight();
+		var pW = gridCalculator.getBlockWidth();
+
+		if (ball.hitsBlockTop(pX, pY, pH, pW)) self.ballDirection.dY = -1;
+		if (ball.hitsBlockBottom(pX, pY, pH, pW)) self.ballDirection.dY = 1;
+		//if (ball.hitsBlockLeft(pX, pY, pH, pW)) debugger;
+		if (ball.hitsBlockLeft(pX, pY, pH, pW)) self.ballDirection.dX = -1;
+		if (ball.hitsBlockRight(pX, pY, pH, pW)) self.ballDirection.dX = 1;
 		
 		ball.move(self.ballDirection.dX, self.ballDirection.dY);
 		ball.draw();
@@ -299,5 +385,42 @@ function GridCalculator(realHeight, realWidth, numColumns, numRows) {
 		getNumColumns: getNumColumns,
 		getRealHeight: getRealHeight,
 		getRealWidth: getRealWidth
+	};
+}
+
+// geometry helpers
+function Point(x, y) {
+	this.x = x;
+	this.y = y;
+}
+
+function Triangle(p1, p2, p3) {
+	this.p1 = p1;
+	this.p2 = p2;
+	this.p3 = p3;
+
+	var self = this;
+
+	var sign = function(n) {
+		if (n > 0) return 1;
+		if (n < 0) return -1;
+		return 0;
+	};
+
+	// from http://www.emanueleferonato.com/2012/06/18/algorithm-to-determine-if-a-point-is-inside-a-triangle-with-mathematics-no-hit-test-involved/
+	var isInside = function (p) {
+		var p1 = self.p1;
+		var p2 = self.p2;
+		var p3 = self.p3;
+
+		var planeP1P2 = (p1.x - p.x) * (p2.y - p.y) - (p2.x - p.x) * (p1.y - p.y);
+		var planeP2P3 = (p2.x - p.x) * (p3.y - p.y) - (p3.x - p.x) * (p2.y - p.y);
+		var planeP3P1 = (p3.x - p.x) * (p1.y - p.y) - (p1.x - p.x) * (p3.y - p.y);
+
+		return sign(planeP1P2) == sign(planeP2P3) && sign(planeP2P3) == sign(planeP3P1);
+	};
+
+	return {
+		isInside: isInside
 	};
 }
