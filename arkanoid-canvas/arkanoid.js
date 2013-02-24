@@ -293,11 +293,16 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 	self.ballDirection = {
 		dX: 1,
 		dY: 1
-	}
+	};
+	self.playerSpeed = 0;
 
 	self.pressedKeys = {
 		leftArrow: false,
 		rightArrow: false
+	};
+	self.framesForKey = {
+		leftArrow: 0,
+		rightArrow: 0
 	};
 
 	var onKeyDown = function(evt) {
@@ -329,7 +334,17 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		if (ball.hitsBlockRight(pX, pY, pH, pW)) self.ballDirection.dX = 1;
 		
 		ball.move(self.ballDirection.dX, self.ballDirection.dY);
-		player.move(self.pressedKeys.leftArrow ? -1 : self.pressedKeys.rightArrow ? 1 : 0);
+
+		self.framesForKey.leftArrow = self.pressedKeys.leftArrow ? self.framesForKey.leftArrow + 1 : 0;
+		self.framesForKey.rightArrow = self.pressedKeys.rightArrow ? self.framesForKey.rightArrow + 1 : 0;
+
+		if (!self.pressedKeys.leftArrow && self.playerSpeed < 0) self.playerSpeed = 0;
+		if (!self.pressedKeys.rightArrow && self.playerSpeed > 0) self.playerSpeed = 0;
+
+		self.playerSpeed += self.framesForKey.rightArrow / 200;
+		self.playerSpeed -= self.framesForKey.leftArrow / 200;
+		
+		player.move(self.playerSpeed);
 
 		ball.draw();
 		player.draw();
