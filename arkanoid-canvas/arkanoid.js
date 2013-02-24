@@ -42,7 +42,8 @@ window.arkanoid = (function(userOptions) {
 		initOptions();
 		initCanvas();
 
-		var stage = new ArkanoidStage(ctx, options.stageHeight, options.stageWidth);
+		var grid = new GridCalculator(options.stageHeight, options.stageWidth, 8, 20);
+		var stage = new ArkanoidStage(ctx, grid);
 	}
 
 	// public methods
@@ -70,17 +71,22 @@ function DrawableEntityBase(drawingContext, color) {
 // DrawableBlock: DrawableEntityBase
 DrawableBlock.prototype = Object.create(DrawableEntityBase.prototype);
 DrawableBlock.prototype.constructor = DrawableEntityBase;
-function DrawableBlock(drawingContext, color, posX, posY, height, width) {
+function DrawableBlock(drawingContext, color, gridCalculator, gridRow, gridColumn) {
 	DrawableEntityBase.call(this, drawingContext, color);
 	var self = this;
-	self.posX = posX;
-	self.posY = posY;
-	self.height = height;
-	self.width = width;
+	self.gridCalculator = gridCalculator;
+	self.gridRow = gridRow;
+	self.gridColumn = gridColumn;
 
 	self.draw = function() {
 		self.ctx.fillStyle = color;
-		self.ctx.fillRect(self.posX, self.posY, self.height, self.width);
+
+		var x = self.gridCalculator.getBlockPosX(self.gridColumn);
+		var y = self.gridCalculator.getBlockPosY(self.gridRow);
+		var h = self.gridCalculator.getBlockHeight();
+		var w = self.gridCalculator.getBlockWidth();
+
+		self.ctx.fillRect(x, y, w, h);
 	};
 
 	return {
@@ -111,16 +117,15 @@ function DrawableCircle(drawingContext, color, radius, centerX, centerY) {
 // ArkanoidPlayer
 ArkanoidPlayer.prototype = Object.create(DrawableBlock.prototype);
 ArkanoidPlayer.prototype.constructor = DrawableBlock;
-function ArkanoidPlayer(drawingContext, color, blockHeight, blockWidth, stageWidth, stageHeight) {
+function ArkanoidPlayer(drawingContext, color, gridCalculator) {
 	var self = this;
-	self.stageWidth = stageWidth;
-	self.stageHeight = stageHeight;
 	self.cornerX = 0;
 	self.cornerY = 0;
+	self.gridCalculator = gridCalculator;
 
-	DrawableBlock.call(this, drawingContext, color, (stageWidth - blockWidth)/2, stageHeight - blockWidth * 2, blockWidth, blockHeight);
+	DrawableBlock.call(this, drawingContext, color, gridCalculator, gridCalculator.getNumRows() - 2, gridCalculator.getNumColumns() - 2);
 	self.centerPlayer = function() {
-		self.cornerX = (stageWidth - self.width) / 2;
+		self.cornerX = 100; //TODO
 	};
 
 	self.centerPlayer();
@@ -131,15 +136,63 @@ function ArkanoidPlayer(drawingContext, color, blockHeight, blockWidth, stageWid
 }
 
 // ArkanoidStage
-function ArkanoidStage(drawingContext, height, width) {
-	this.blockWidth = width / 10;
-	this.blockHeight = height / 50;
-	this.ballRadius = this.blockHeight * 0.8;
+function ArkanoidStage(drawingContext, gridCalculator) {
+	this.ballRadius = gridCalculator.getBlockHeight() * 0.8;
 
-	var player = new ArkanoidPlayer(drawingContext, "#000", this.blockHeight, this.blockWidth, width, height);
+	var player = new ArkanoidPlayer(drawingContext, "#000", gridCalculator);
 	player.draw();
 
 	return {
 
+	};
+}
+
+// helper: grid calculator for coordinate system
+function GridCalculator(realHeight, realWidth, numColumns, numRows) {
+	var self = this;
+	self.numColumns = numColumns;
+	self.numRows = numRows;
+
+	var getNumRows = function() {
+		return self.numRows;
+	}
+
+	var getNumColumns = function() {
+		return self.numColumns;
+	}
+
+	var getBlockWidth = function() {
+		return realWidth / numColumns;
+	};
+
+	var getBlockHeight = function() {
+		return realHeight / numRows;
+	};
+
+	var getBlockPosX = function(columnIndex) {
+		return columnIndex * getBlockWidth();
+	};
+
+	var getBlockPosY = function(rowIndex) {
+		return rowIndex * getBlockHeight();
+	};
+
+	var getBlockCenterPosX = function(columnIndex) {
+		return (columnIndex + 0.5) * getBlockWidth();
+	};
+
+	var getBlockCenterPosY = function(rowIndex) {
+		return (rowIndex + 0.5) * getBlockHeight();
+	};
+
+	return {
+		getBlockWidth: getBlockWidth,
+		getBlockHeight: getBlockHeight,
+		getBlockPosX: getBlockPosX,
+		getBlockPosY: getBlockPosY,
+		getBlockCenterPosX: getBlockCenterPosX,
+		getBlockCenterPosY: getBlockCenterPosY,
+		getNumRows: getNumRows,
+		getNumColumns: getNumColumns
 	};
 }
