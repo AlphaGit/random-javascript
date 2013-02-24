@@ -154,11 +154,16 @@ function ArkanoidPlayer(drawingContext, color, gridCalculator) {
 		return self.cornerY;
 	};
 
+	var move = function(dX) {
+		self.cornerX += dX;
+	};
+
 	return {
 		draw: self.draw,
 		centerPlayer: self.centerPlayer,
 		getCornerX: getCornerX,
-		getCornerY: getCornerY
+		getCornerY: getCornerY,
+		move: move
 	};
 }
 
@@ -272,6 +277,9 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 
 // ArkanoidGame
 function ArkanoidGame(drawingContext, gridCalculator, fps) {
+	var KEY_CODE_LEFT_ARROW = 37;
+	var KEY_CODE_RIGHT_ARROW = 39;
+
 	var self = this;
 	self.ballRadius = gridCalculator.getBlockHeight() * 0.6;
 	self.runningLoop = null;
@@ -287,6 +295,22 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		dY: 1
 	}
 
+	self.pressedKeys = {
+		leftArrow: false,
+		rightArrow: false
+	};
+
+	var onKeyDown = function(evt) {
+		evt = evt || window.event;
+		if (evt.keyCode == KEY_CODE_LEFT_ARROW) self.pressedKeys.leftArrow = true;
+		if (evt.keyCode == KEY_CODE_RIGHT_ARROW) self.pressedKeys.rightArrow = true;
+	};
+	var onKeyUp = function(evt) {
+		evt = evt || window.event;
+		if (evt.keyCode == KEY_CODE_LEFT_ARROW) self.pressedKeys.leftArrow = false;
+		if (evt.keyCode == KEY_CODE_RIGHT_ARROW) self.pressedKeys.rightArrow = false;
+	};
+
 	var gameLoop = function() {
 		drawingContext.clearRect(0, 0, gridCalculator.getRealWidth(), gridCalculator.getRealHeight());
 		if (ball.hitsBottom()) self.ballDirection.dY = -1;
@@ -301,22 +325,26 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 
 		if (ball.hitsBlockTop(pX, pY, pH, pW)) self.ballDirection.dY = -1;
 		if (ball.hitsBlockBottom(pX, pY, pH, pW)) self.ballDirection.dY = 1;
-		//if (ball.hitsBlockLeft(pX, pY, pH, pW)) debugger;
 		if (ball.hitsBlockLeft(pX, pY, pH, pW)) self.ballDirection.dX = -1;
 		if (ball.hitsBlockRight(pX, pY, pH, pW)) self.ballDirection.dX = 1;
 		
 		ball.move(self.ballDirection.dX, self.ballDirection.dY);
-		ball.draw();
+		player.move(self.pressedKeys.leftArrow ? -1 : self.pressedKeys.rightArrow ? 1 : 0);
 
+		ball.draw();
 		player.draw();
 	};
 
 	var start = function() {
+		window.onkeydown = onKeyDown;
+		window.onkeyup = onKeyUp;
 		self.runningLoop = setInterval(gameLoop, 1000/fps);
 	};
 
 	var pause = function() {
 		clearInterval(self.runningLoop);
+		window.onkeydown = null;
+		window.onkeyup = null;
 		self.runningLoop = null;
 	};
 
