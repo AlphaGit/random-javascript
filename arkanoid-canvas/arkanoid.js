@@ -254,7 +254,7 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 		var limitRight = blockX + blockWidth + radius;
 		var limitLeft = blockX - radius;
 		var limitTop = blockY + blockHeight / 2;
-		var limitBottom = blockY + blockHeight;
+		var limitBottom = blockY + blockHeight + radius;
 
 		var pointA = new Point(limitLeft, limitBottom);
 		var pointB = new Point((limitLeft + limitRight) / 2, limitTop);
@@ -266,10 +266,10 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 
 	var hitsBlockLeft = function(blockX, blockY, blockHeight, blockWidth) {
 		// ball center needs to be in the triangular section between the block center and the left edge
-		var limitLeft = blockX;
+		var limitLeft = blockX - radius;
 		var limitRight = blockX + blockWidth / 2;
-		var limitTop = blockY;
-		var limitBottom = blockY + blockHeight;
+		var limitTop = blockY - radius;
+		var limitBottom = blockY + blockHeight + radius;
 
 		var pointA = new Point(limitLeft, limitTop);
 		var pointB = new Point(limitRight, (limitTop + limitBottom) / 2);
@@ -282,9 +282,9 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 	var hitsBlockRight = function(blockX, blockY, blockHeight, blockWidth) {
 		// ball center needs to be in the triangular section between the block center and the right edge
 		var limitLeft = blockX + blockWidth / 2;
-		var limitRight = blockX + blockWidth;
-		var limitTop = blockY;
-		var limitBottom = blockY + blockHeight;
+		var limitRight = blockX + blockWidth + radius;
+		var limitTop = blockY - radius;
+		var limitBottom = blockY + blockHeight + radius;
 
 		var pointA = new Point(limitLeft, (limitTop + limitBottom) / 2);
 		var pointB = new Point(limitRight, limitTop);
