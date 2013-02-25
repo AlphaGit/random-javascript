@@ -428,7 +428,7 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 	ball.draw();
 
 	var targetBlocks = [];
-	var numberColumns = gridCalculator.getNumColumns();
+	var numberColumns = gridCalculator.getNumColumns() - 1;
 	var ROW_LIMIT = 3;
 	for (var column = numberColumns; column >= 0; column--) {
 		for (var row = ROW_LIMIT; row >= 0; row--) {
