@@ -125,7 +125,7 @@ function DrawableCircle(drawingContext, color, radius, centerX, centerY) {
 // TargetBlock: DrawableBlock
 TargetBlock.prototype = Object.create(DrawableBlock.prototype);
 TargetBlock.prototype.constructor = DrawableBlock;
-function TargetBlock(drawingContext, color, gridCalculator, gridRow, gridColumn) {
+function TargetBlock(drawingContext, color, gridCalculator, gridRow, gridColumn, score) {
 	var TARGET_BLOCK_PADDING = 2;
 	var TARGET_BLOCK_HEALTH = 1;
 
@@ -144,6 +144,10 @@ function TargetBlock(drawingContext, color, gridCalculator, gridRow, gridColumn)
 		return dimensions;
 	};
 
+	var getScore = function() {
+		return score;
+	};
+
 	var takeHit = function() {
 		self.hitCounter++;
 	};
@@ -156,7 +160,8 @@ function TargetBlock(drawingContext, color, gridCalculator, gridRow, gridColumn)
 		takeHit: takeHit,
 		getDimensions: self.getDimensions,
 		draw: self.draw,
-		isToBeDestroyed: isToBeDestroyed
+		isToBeDestroyed: isToBeDestroyed,
+		getScore: getScore
 	};
 }
 
@@ -404,6 +409,7 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 	self.ballRadius = gridCalculator.getBlockHeight() * 0.6;
 	self.runningLoop = null;
 	self.currentLifeCount = 3;
+	self.currentScore = 0;
 
 	var player = new ArkanoidPlayer(drawingContext, "#000", gridCalculator, fps);
 	player.draw();
@@ -412,9 +418,15 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 	ball.draw();
 
 	var targetBlocks = [];
-	for (var column = gridCalculator.getNumColumns(); column >= 0; column--) {
-		for (var row = 3; row >= 0; row--) {
-			var block = new TargetBlock(drawingContext, "#000", gridCalculator, row, column);
+	var numberColumns = gridCalculator.getNumColumns();
+	var ROW_LIMIT = 3;
+	for (var column = numberColumns; column >= 0; column--) {
+		for (var row = ROW_LIMIT; row >= 0; row--) {
+			var proximityToCorners = Math.abs((column + 1) - Math.floor(numberColumns/2));
+			var proximityToTop = ROW_LIMIT - row;
+			var difficultyRanking = (proximityToTop + proximityToCorners) * 30;
+
+			var block = new TargetBlock(drawingContext, "rgb(" + difficultyRanking + ", 0, 0)", gridCalculator, row, column, difficultyRanking);
 			targetBlocks.push(block);
 		};
 	};
@@ -465,6 +477,11 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 
 		drawingContext.font = "14pt Courier New";
 		drawingContext.fillText(" | " + self.currentLifeCount + " Life" + (self.currentLifeCount == 1 ? "" : "s"), x, y);
+
+		/*drawingContext.textAlign = "right";*/
+		var scoreText = "Score: " + self.currentScore;
+		x = screenWidth - drawingContext.measureText(scoreText).width - PADDING_X;
+		drawingContext.fillText(scoreText, x, y - PADDING_Y);
 	};
 
 	var gameLoop = function() {
@@ -489,6 +506,7 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		while (targetBlockIndex < targetBlocks.length) {
 			var tb = targetBlocks[targetBlockIndex];
 			if (tb.isToBeDestroyed()) {
+				self.currentScore += tb.getScore();
 				targetBlocks.splice(targetBlockIndex, 1);
 			} else {
 				tb.draw();
