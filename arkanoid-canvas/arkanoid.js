@@ -489,6 +489,10 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 			pause();
 			showBigMessage("Game over");
 		}
+		if (targetBlocks.length == 0) {
+			pause();
+			showBigMessage("You won!");
+		}
 	};
 
 	var start = function() {
