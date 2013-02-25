@@ -519,11 +519,11 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 
 		if (self.currentLifeCount <= 0) {
 			pause();
-			showBigMessage("Game over");
+			showBigMessage("Game over", "Refresh to play again.");
 		}
 		if (targetBlocks.length == 0) {
 			pause();
-			showBigMessage("You won!");
+			showBigMessage("You won!", "And you scored " + self.currentScore + " points!");
 		}
 	};
 
@@ -540,7 +540,7 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		self.runningLoop = null;
 	};
 
-	var showBigMessage = function(message) {
+	var showBigMessage = function(message, subtitleMessage) {
 		var SCREEN_PADDING = 10;
 
 		var x = SCREEN_PADDING;
@@ -554,6 +554,11 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		drawingContext.font = "bold 60pt Courier New";
 		drawingContext.textAlign = "center";
 		drawingContext.strokeText(message, x + w / 2, y + h / 2);
+
+		if (subtitleMessage) {
+			drawingContext.font = "20pt Courier New";
+			drawingContext.fillText(subtitleMessage, x + w / 2, h / 2 + 40);
+		}
 	};
 
 	return {
