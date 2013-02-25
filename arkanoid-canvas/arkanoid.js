@@ -484,6 +484,11 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 
 		ball.draw();
 		player.draw();
+
+		if (self.currentLifeCount <= 0) {
+			pause();
+			showBigMessage("Game over");
+		}
 	};
 
 	var start = function() {
@@ -497,6 +502,22 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		window.onkeydown = null;
 		window.onkeyup = null;
 		self.runningLoop = null;
+	};
+
+	var showBigMessage = function(message) {
+		var SCREEN_PADDING = 10;
+
+		var x = SCREEN_PADDING;
+		var y = SCREEN_PADDING;
+		var w = gridCalculator.getRealWidth() - SCREEN_PADDING * 2;
+		var h = gridCalculator.getRealHeight() - SCREEN_PADDING * 2;
+
+		drawingContext.clearRect(x, y, w, h);
+		drawingContext.lineWidth = 3;
+		drawingContext.strokeRect(x, y, w, h);
+		drawingContext.font = "bold 60pt Courier New";
+		drawingContext.textAlign = "center";
+		drawingContext.strokeText(message, x + w / 2, y + h / 2);
 	};
 
 	return {
