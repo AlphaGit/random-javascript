@@ -218,6 +218,9 @@ function ArkanoidPlayer(drawingContext, color, gridCalculator, fps) {
 
 		self.playerSpeed += self.framesForMovement.right / fps;
 		self.playerSpeed -= self.framesForMovement.left / fps;
+
+		if (self.playerSpeed > 50) self.playerSpeed = 50;
+		if (self.playerSpeed < -50) self.playerSpeed = -50;
 		
 		self.cornerX += self.playerSpeed;
 	};
