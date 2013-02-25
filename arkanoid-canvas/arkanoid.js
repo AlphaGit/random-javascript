@@ -1,5 +1,4 @@
 window.arkanoid = (function(userOptions) {
-
 	// private fields
 	var canvas = null;
 	var ctx = null;
@@ -11,7 +10,6 @@ window.arkanoid = (function(userOptions) {
 		stageHeight: 600,
 		stageWidth: 1024
 	};
-
 
 	// private methods
 	function initOptions(userOptions) {
@@ -332,34 +330,42 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 		return rightTriangle.isInside(new Point(self.centerX, self.centerY));
 	};
 
-	var adjustForBounces = function(blockArray, recordHit) {
-		if (hitsBottom()) self.movement.dY = -1;
-		if (hitsTop()) self.movement.dY = 1;
-		if (hitsRight()) self.movement.dX = -1;
-		if (hitsLeft()) self.movement.dX = 1;
+	var adjustForBounces = function(blockArray, recordHit, speedRelativeToBlockCenter) {
+		var DISTANCE_TO_SPEED_RELATION = 30;
+		if (hitsBottom()) self.movement.dY = -Math.abs(self.movement.dY);
+		if (hitsTop()) self.movement.dY = Math.abs(self.movement.dY);
+		if (hitsRight()) self.movement.dX = -Math.abs(self.movement.dX);
+		if (hitsLeft()) self.movement.dX = Math.abs(self.movement.dX);
 
 		for (var index in blockArray) {
 			var block = blockArray[index];
 			var bd = block.getDimensions();
 
+			var blockCenterX = bd.x + bd.w / 2;
+			var blockCenterY = bd.y + bd.h / 2;
+
 			var hit = false;
 			if (hitsBlockTop(bd.x, bd.y, bd.h, bd.w)) { 
-				self.movement.dY = -1;
-				hit =  true;
+				self.movement.dY = speedRelativeToBlockCenter ? (self.centerY - blockCenterY) / DISTANCE_TO_SPEED_RELATION : -Math.abs(self.movement.dY);
+				self.movement.dX = speedRelativeToBlockCenter ? (self.centerX - blockCenterX) / DISTANCE_TO_SPEED_RELATION : self.movement.dX;
+				hit = true;
 			}
 
 			if (hitsBlockBottom(bd.x, bd.y, bd.h, bd.w))  {
-				self.movement.dY = 1;
+				self.movement.dY = speedRelativeToBlockCenter ? (self.centerY - blockCenterY) / DISTANCE_TO_SPEED_RELATION : Math.abs(self.movement.dY);
+				self.movement.dX = speedRelativeToBlockCenter ? (self.centerX - blockCenterX) / DISTANCE_TO_SPEED_RELATION : self.movement.dX;
 				hit = true;
 			}
 
 			if (hitsBlockLeft(bd.x, bd.y, bd.h, bd.w)) {
-				self.movement.dX = -1;
+				self.movement.dX = speedRelativeToBlockCenter ? (self.centerX - blockCenterX) / DISTANCE_TO_SPEED_RELATION : -Math.abs(self.movement.dX);
+				self.movement.dY = speedRelativeToBlockCenter ? (self.centerY - blockCenterY) / DISTANCE_TO_SPEED_RELATION : self.movement.dY;
 				hit = true;
 			}
 
 			if (hitsBlockRight(bd.x, bd.y, bd.h, bd.w)) { 
-				self.movement.dX = 1;
+				self.movement.dX = speedRelativeToBlockCenter ? (self.centerX - blockCenterX) / DISTANCE_TO_SPEED_RELATION : Math.abs(self.movement.dX);
+				self.movement.dY = speedRelativeToBlockCenter ? (self.centerY - blockCenterY) / DISTANCE_TO_SPEED_RELATION : self.movement.dY;
 				hit = true;
 			}
 
@@ -416,8 +422,8 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 
 	var gameLoop = function() {
 		// calculate bounces
-		ball.adjustForBounces(targetBlocks, true);
-		ball.adjustForBounces([player], false);
+		ball.adjustForBounces(targetBlocks, true, false);
+		ball.adjustForBounces([player], false, true);
 		ball.move();
 		player.move(self.pressedKeys.leftArrow, self.pressedKeys.rightArrow);
 
