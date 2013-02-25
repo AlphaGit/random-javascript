@@ -129,6 +129,8 @@ TargetBlock.prototype = Object.create(DrawableBlock.prototype);
 TargetBlock.prototype.constructor = DrawableBlock;
 function TargetBlock(drawingContext, color, gridCalculator, gridRow, gridColumn) {
 	var TARGET_BLOCK_PADDING = 2;
+	var TARGET_BLOCK_HEALTH = 1;
+
 	DrawableBlock.call(this, drawingContext, color, gridCalculator, gridRow, gridColumn);
 	var self = this;
 	self.hitCounter = 0;
@@ -148,10 +150,15 @@ function TargetBlock(drawingContext, color, gridCalculator, gridRow, gridColumn)
 		self.hitCounter++;
 	};
 
+	var isToBeDestroyed = function() {
+		return self.hitCounter >= TARGET_BLOCK_HEALTH;
+	};
+
 	return {
 		takeHit: takeHit,
 		getDimensions: self.getDimensions,
-		draw: self.draw
+		draw: self.draw,
+		isToBeDestroyed: isToBeDestroyed
 	};
 }
 
@@ -325,7 +332,7 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 		return rightTriangle.isInside(new Point(self.centerX, self.centerY));
 	};
 
-	var adjustForBounces = function(blockArray) {
+	var adjustForBounces = function(blockArray, recordHit) {
 		if (hitsBottom()) self.movement.dY = -1;
 		if (hitsTop()) self.movement.dY = 1;
 		if (hitsRight()) self.movement.dX = -1;
@@ -335,10 +342,28 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 			var block = blockArray[index];
 			var bd = block.getDimensions();
 
-			if (hitsBlockTop(bd.x, bd.y, bd.h, bd.w)) self.movement.dY = -1;
-			if (hitsBlockBottom(bd.x, bd.y, bd.h, bd.w)) self.movement.dY = 1;
-			if (hitsBlockLeft(bd.x, bd.y, bd.h, bd.w)) self.movement.dX = -1;
-			if (hitsBlockRight(bd.x, bd.y, bd.h, bd.w)) self.movement.dX = 1;
+			var hit = false;
+			if (hitsBlockTop(bd.x, bd.y, bd.h, bd.w)) { 
+				self.movement.dY = -1;
+				hit =  true;
+			}
+
+			if (hitsBlockBottom(bd.x, bd.y, bd.h, bd.w))  {
+				self.movement.dY = 1;
+				hit = true;
+			}
+
+			if (hitsBlockLeft(bd.x, bd.y, bd.h, bd.w)) {
+				self.movement.dX = -1;
+				hit = true;
+			}
+
+			if (hitsBlockRight(bd.x, bd.y, bd.h, bd.w)) { 
+				self.movement.dX = 1;
+				hit = true;
+			}
+
+			if (recordHit && hit) block.takeHit();
 		}
 	};
 
@@ -391,16 +416,24 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 
 	var gameLoop = function() {
 		// calculate bounces
-		ball.adjustForBounces(targetBlocks);
-		ball.adjustForBounces([player]);
+		ball.adjustForBounces(targetBlocks, true);
+		ball.adjustForBounces([player], false);
 		ball.move();
 		player.move(self.pressedKeys.leftArrow, self.pressedKeys.rightArrow);
 
+		// re-draw screen
 		drawingContext.clearRect(0, 0, gridCalculator.getRealWidth(), gridCalculator.getRealHeight());
-		for (var targetBlockIndex in targetBlocks) {
+		var targetBlockIndex = 0; 
+		while (targetBlockIndex < targetBlocks.length) {
 			var tb = targetBlocks[targetBlockIndex];
-			tb.draw();
+			if (tb.isToBeDestroyed()) {
+				targetBlocks.splice(targetBlockIndex, 1);
+			} else {
+				tb.draw();
+				targetBlockIndex++;
+			}
 		}
+
 		ball.draw();
 		player.draw();
 	};
