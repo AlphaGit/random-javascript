@@ -230,12 +230,17 @@ function ArkanoidPlayer(drawingContext, color, gridCalculator, fps) {
 		self.cornerX += self.playerSpeed;
 	};
 
+	var moveTo = function(pos) {
+		self.cornerX = pos - gridCalculator.getBlockWidth() / 2;
+	};
+
 	return {
 		draw: self.draw,
 		centerPlayer: self.centerPlayer,
 		getCornerX: getCornerX,
 		getCornerY: getCornerY,
 		move: move,
+		moveTo: moveTo,
 		getDimensions: self.getDimensions
 	};
 }
@@ -435,6 +440,10 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		leftArrow: false,
 		rightArrow: false
 	};
+	self.mouseData = {
+		lastpos: 0,
+		moved: false
+	};
 
 	var onKeyDown = function(evt) {
 		evt = evt || window.event;
@@ -445,6 +454,14 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		evt = evt || window.event;
 		if (evt.keyCode == KEY_CODE_LEFT_ARROW) self.pressedKeys.leftArrow = false;
 		if (evt.keyCode == KEY_CODE_RIGHT_ARROW) self.pressedKeys.rightArrow = false;
+	};
+	var onMouseMove = function(evt) {
+		evt = evt || window.event;
+		self.mouseData.pos = evt.pageX;
+		self.mouseData.moved = true;
+		setTimeout(function() {
+			self.mouseData.moved = false;
+		}, 1000/fps);
 	};
 
 	var drawControls = function() {
@@ -497,6 +514,7 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		// move
 		ball.move();
 		player.move(self.pressedKeys.leftArrow, self.pressedKeys.rightArrow);
+		if (self.mouseData.moved) player.moveTo(self.mouseData.pos);
 
 		// re-draw screen
 		drawingContext.clearRect(0, 0, gridCalculator.getRealWidth(), gridCalculator.getRealHeight());
@@ -530,6 +548,7 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 	var start = function() {
 		window.onkeydown = onKeyDown;
 		window.onkeyup = onKeyUp;
+		window.onmousemove = onMouseMove;
 		self.runningLoop = setInterval(gameLoop, 1000/fps);
 	};
 
@@ -537,6 +556,7 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		clearInterval(self.runningLoop);
 		window.onkeydown = null;
 		window.onkeyup = null;
+		window.onmousemove = null;
 		self.runningLoop = null;
 	};
 
