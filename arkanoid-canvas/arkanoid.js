@@ -91,7 +91,7 @@ function DrawableBlock(drawingContext, color, gridCalculator, gridRow, gridColum
 	self.draw = function() {
 		self.ctx.fillStyle = self.color;
 
-		var dimensions = getDimensions();
+		var dimensions = self.getDimensions();
 
 		self.ctx.fillRect(dimensions.x, dimensions.y, dimensions.w, dimensions.h);
 	};
@@ -124,7 +124,38 @@ function DrawableCircle(drawingContext, color, radius, centerX, centerY) {
 	};
 }
 
-// ArkanoidPlayer
+// TargetBlock: DrawableBlock
+TargetBlock.prototype = Object.create(DrawableBlock.prototype);
+TargetBlock.prototype.constructor = DrawableBlock;
+function TargetBlock(drawingContext, color, gridCalculator, gridRow, gridColumn) {
+	var TARGET_BLOCK_PADDING = 2;
+	DrawableBlock.call(this, drawingContext, color, gridCalculator, gridRow, gridColumn);
+	var self = this;
+	self.hitCounter = 0;
+
+	var parentGetDimensions = self.getDimensions;
+	self.getDimensions = function() {
+		var dimensions = parentGetDimensions();
+		dimensions.x += TARGET_BLOCK_PADDING;
+		dimensions.y += TARGET_BLOCK_PADDING;
+		dimensions.h -= TARGET_BLOCK_PADDING*2;
+		dimensions.w -= TARGET_BLOCK_PADDING*2;
+
+		return dimensions;
+	};
+
+	var takeHit = function() {
+		self.hitCounter++;
+	};
+
+	return {
+		takeHit: takeHit,
+		getDimensions: self.getDimensions,
+		draw: self.draw
+	};
+}
+
+// ArkanoidPlayer: DrawableBlock
 ArkanoidPlayer.prototype = Object.create(DrawableBlock.prototype);
 ArkanoidPlayer.prototype.constructor = DrawableBlock;
 function ArkanoidPlayer(drawingContext, color, gridCalculator, fps) {
@@ -334,6 +365,14 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 	var ball = new Ball(drawingContext, "#000", self.ballRadius, gridCalculator.getRealHeight(), gridCalculator.getRealWidth());
 	ball.draw();
 
+	var targetBlocks = [];
+	for (var column = gridCalculator.getNumColumns(); column >= 0; column--) {
+		for (var row = 3; row >= 0; row--) {
+			var block = new TargetBlock(drawingContext, "#000", gridCalculator, row, column);
+			targetBlocks.push(block);
+		};
+	};
+
 	self.pressedKeys = {
 		leftArrow: false,
 		rightArrow: false
@@ -351,12 +390,17 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 	};
 
 	var gameLoop = function() {
-		drawingContext.clearRect(0, 0, gridCalculator.getRealWidth(), gridCalculator.getRealHeight());
+		// calculate bounces
+		ball.adjustForBounces(targetBlocks);
 		ball.adjustForBounces([player]);
-
 		ball.move();
 		player.move(self.pressedKeys.leftArrow, self.pressedKeys.rightArrow);
 
+		drawingContext.clearRect(0, 0, gridCalculator.getRealWidth(), gridCalculator.getRealHeight());
+		for (var targetBlockIndex in targetBlocks) {
+			var tb = targetBlocks[targetBlockIndex];
+			tb.draw();
+		}
 		ball.draw();
 		player.draw();
 	};
