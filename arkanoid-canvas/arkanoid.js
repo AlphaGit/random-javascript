@@ -120,7 +120,7 @@ function DrawableCircle(drawingContext, color, radius, centerX, centerY) {
 // ArkanoidPlayer
 ArkanoidPlayer.prototype = Object.create(DrawableBlock.prototype);
 ArkanoidPlayer.prototype.constructor = DrawableBlock;
-function ArkanoidPlayer(drawingContext, color, gridCalculator) {
+function ArkanoidPlayer(drawingContext, color, gridCalculator, fps) {
 	var self = this;
 	self.cornerX = 0;
 	self.cornerY = 0;
@@ -144,6 +144,12 @@ function ArkanoidPlayer(drawingContext, color, gridCalculator) {
 		self.ctx.fillRect(x, y, w, h);
 	};
 
+	self.framesForMovement = {
+		left: 0,
+		right: 0
+	};
+	self.playerSpeed = 0;
+
 	self.centerPlayer();
 
 	var getCornerX = function() {
@@ -154,8 +160,17 @@ function ArkanoidPlayer(drawingContext, color, gridCalculator) {
 		return self.cornerY;
 	};
 
-	var move = function(dX) {
-		self.cornerX += dX;
+	var move = function(leftDirection, rightDirection) {
+		self.framesForMovement.left = leftDirection ? self.framesForMovement.left + 1 : 0;
+		self.framesForMovement.right = rightDirection ? self.framesForMovement.right + 1 : 0;
+
+		if (!leftDirection && self.playerSpeed < 0) self.playerSpeed = 0;
+		if (!rightDirection && self.playerSpeed > 0) self.playerSpeed = 0;
+
+		self.playerSpeed += self.framesForMovement.right / fps;
+		self.playerSpeed -= self.framesForMovement.left / fps;
+		
+		self.cornerX += self.playerSpeed;
 	};
 
 	return {
@@ -284,7 +299,7 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 	self.ballRadius = gridCalculator.getBlockHeight() * 0.6;
 	self.runningLoop = null;
 
-	var player = new ArkanoidPlayer(drawingContext, "#000", gridCalculator);
+	var player = new ArkanoidPlayer(drawingContext, "#000", gridCalculator, fps);
 	player.draw();
 
 	var ball = new Ball(drawingContext, "#000", self.ballRadius, gridCalculator.getRealHeight(), gridCalculator.getRealWidth());
@@ -294,15 +309,9 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		dX: 1,
 		dY: 1
 	};
-	self.playerSpeed = 0;
-
 	self.pressedKeys = {
 		leftArrow: false,
 		rightArrow: false
-	};
-	self.framesForKey = {
-		leftArrow: 0,
-		rightArrow: 0
 	};
 
 	var onKeyDown = function(evt) {
@@ -334,17 +343,7 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		if (ball.hitsBlockRight(pX, pY, pH, pW)) self.ballDirection.dX = 1;
 		
 		ball.move(self.ballDirection.dX, self.ballDirection.dY);
-
-		self.framesForKey.leftArrow = self.pressedKeys.leftArrow ? self.framesForKey.leftArrow + 1 : 0;
-		self.framesForKey.rightArrow = self.pressedKeys.rightArrow ? self.framesForKey.rightArrow + 1 : 0;
-
-		if (!self.pressedKeys.leftArrow && self.playerSpeed < 0) self.playerSpeed = 0;
-		if (!self.pressedKeys.rightArrow && self.playerSpeed > 0) self.playerSpeed = 0;
-
-		self.playerSpeed += self.framesForKey.rightArrow / 200;
-		self.playerSpeed -= self.framesForKey.leftArrow / 200;
-		
-		player.move(self.playerSpeed);
+		player.move(self.pressedKeys.leftArrow, self.pressedKeys.rightArrow);
 
 		ball.draw();
 		player.draw();
