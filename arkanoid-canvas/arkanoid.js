@@ -420,6 +420,34 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		if (evt.keyCode == KEY_CODE_RIGHT_ARROW) self.pressedKeys.rightArrow = false;
 	};
 
+	var drawControls = function() {
+		var PADDING_X = 20;
+		var PADDING_Y = 20;
+
+		var screenWidth = gridCalculator.getRealWidth();
+		var screenHeight = gridCalculator.getRealHeight();
+
+		drawingContext.font = "bold 14pt Courier New";
+		var textWidth = drawingContext.measureText("Left arrow | Right arrow").width;
+
+		var x = screenWidth - textWidth - PADDING_X;
+		var y = screenHeight - PADDING_Y;
+
+		// Left arrow
+		drawingContext.font = self.pressedKeys.leftArrow ? "bold 14pt Courier New" : "14pt Courier New";
+		drawingContext.fillText("Left arrow", x, y);
+		x += drawingContext.measureText("Left arrow").width;
+
+		// separation bar
+		drawingContext.font = "14pt Courier New";
+		drawingContext.fillText(" | ", x, y);
+		x += drawingContext.measureText(" | ").width;
+
+		// right arrow
+		drawingContext.font = self.pressedKeys.rightArrow ? "bold 14pt Courier New" : "14pt Courier New";
+		drawingContext.fillText("Right arrow", x, y);
+	};
+
 	var gameLoop = function() {
 		// calculate bounces
 		ball.adjustForBounces(targetBlocks, true, false);
@@ -429,6 +457,8 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 
 		// re-draw screen
 		drawingContext.clearRect(0, 0, gridCalculator.getRealWidth(), gridCalculator.getRealHeight());
+		drawControls();
+
 		var targetBlockIndex = 0; 
 		while (targetBlockIndex < targetBlocks.length) {
 			var tb = targetBlocks[targetBlockIndex];
