@@ -244,14 +244,22 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 		dX: 1,
 		dY: 1
 	};
+	self.hitsTaken = 0;
 
 	self.centerBall();	
 
 	DrawableCircle.call(this, drawingContext, color, radius, self.centerX, self.centerY);
 
+	var resetDifficulty = function() {
+		self.hitsTaken = 0;
+	};
+
 	var move = function() {
-		self.centerX += self.movement.dX;
-		self.centerY += self.movement.dY;
+		var difficultyMultiplier = self.hitsTaken / 10;
+		if (difficultyMultiplier < 1) difficultyMultiplier = 1;
+
+		self.centerX += self.movement.dX * difficultyMultiplier;
+		self.centerY += self.movement.dY * difficultyMultiplier;
 	};
 
 	var hitsBottom = function() {
@@ -370,6 +378,7 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 			}
 
 			if (recordHit && hit) block.takeHit();
+			if (hit) self.hitsTaken++;
 		}
 	};
 
@@ -378,7 +387,8 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 		draw: self.draw,
 		move: move,
 		adjustForBounces: adjustForBounces,
-		hitsBottom: hitsBottom
+		hitsBottom: hitsBottom,
+		resetDifficulty: resetDifficulty
 	};
 }
 
@@ -461,6 +471,7 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 
 		if (ball.hitsBottom()) {
 			self.currentLifeCount--;
+			ball.resetDifficulty();
 		}
 
 		// move
