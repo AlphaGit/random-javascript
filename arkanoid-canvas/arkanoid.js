@@ -472,7 +472,7 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		var screenHeight = gridCalculator.getRealHeight();
 
 		drawingContext.font = "bold 14pt Courier New";
-		var textWidth = drawingContext.measureText("Left arrow | Right arrow | 3 Lifes").width;
+		var textWidth = drawingContext.measureText("Left arrow | Right arrow | Mouse | 3 Lifes").width;
 
 		var x = screenWidth - textWidth - PADDING_X;
 		var y = screenHeight - PADDING_Y;
@@ -492,10 +492,21 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		drawingContext.fillText("Right arrow", x, y);
 		x += drawingContext.measureText("Right arrow").width;
 
+		// separation bar
+		drawingContext.font = "14pt Courier New";
+		drawingContext.fillText(" | ", x, y);
+		x += drawingContext.measureText(" | ").width;
+
+		// mouse
+		drawingContext.font = self.mouseData.moved ? "bold 14pt Courier New" : "14pt Courier New";
+		drawingContext.fillText("Mouse", x, y);
+		x += drawingContext.measureText("Mouse").width;
+
+		// separator bars and lifes
 		drawingContext.font = "14pt Courier New";
 		drawingContext.fillText(" | " + self.currentLifeCount + " Life" + (self.currentLifeCount == 1 ? "" : "s"), x, y);
 
-		/*drawingContext.textAlign = "right";*/
+		// score
 		var scoreText = "Score: " + self.currentScore;
 		x = screenWidth - drawingContext.measureText(scoreText).width - PADDING_X;
 		drawingContext.fillText(scoreText, x, y - PADDING_Y);
