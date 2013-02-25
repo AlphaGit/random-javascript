@@ -272,6 +272,11 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 		if (difficultyMultiplier < 1) difficultyMultiplier = 1;
 
 		self.centerX += self.movement.dX * difficultyMultiplier;
+		if (self.centerX < radius) self.centerX = radius;
+		if (self.centerX > stageWidth - radius) self.centerX = stageWidth - radius;
+		if (self.centerY < radius) self.centerY = radius;
+		if (self.centerY > stageHeight - radius) self.centerY = stageHeight - radius;
+
 		self.centerY += self.movement.dY * difficultyMultiplier;
 	};
 
