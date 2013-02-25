@@ -377,7 +377,8 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 		centerBall: self.centerBall,
 		draw: self.draw,
 		move: move,
-		adjustForBounces: adjustForBounces
+		adjustForBounces: adjustForBounces,
+		hitsBottom: hitsBottom
 	};
 }
 
@@ -389,6 +390,7 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 	var self = this;
 	self.ballRadius = gridCalculator.getBlockHeight() * 0.6;
 	self.runningLoop = null;
+	self.currentLifeCount = 3;
 
 	var player = new ArkanoidPlayer(drawingContext, "#000", gridCalculator, fps);
 	player.draw();
@@ -428,7 +430,7 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		var screenHeight = gridCalculator.getRealHeight();
 
 		drawingContext.font = "bold 14pt Courier New";
-		var textWidth = drawingContext.measureText("Left arrow | Right arrow").width;
+		var textWidth = drawingContext.measureText("Left arrow | Right arrow | 3 Lifes").width;
 
 		var x = screenWidth - textWidth - PADDING_X;
 		var y = screenHeight - PADDING_Y;
@@ -446,12 +448,22 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		// right arrow
 		drawingContext.font = self.pressedKeys.rightArrow ? "bold 14pt Courier New" : "14pt Courier New";
 		drawingContext.fillText("Right arrow", x, y);
+		x += drawingContext.measureText("Right arrow").width;
+
+		drawingContext.font = "14pt Courier New";
+		drawingContext.fillText(" | " + self.currentLifeCount + " Life" + (self.currentLifeCount == 1 ? "" : "s"), x, y);
 	};
 
 	var gameLoop = function() {
 		// calculate bounces
 		ball.adjustForBounces(targetBlocks, true, false);
 		ball.adjustForBounces([player], false, true);
+
+		if (ball.hitsBottom()) {
+			self.currentLifeCount--;
+		}
+
+		// move
 		ball.move();
 		player.move(self.pressedKeys.leftArrow, self.pressedKeys.rightArrow);
 
