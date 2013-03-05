@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Spirograph with canvas</title>
+		<link rel="stylesheet" type="text/css" href="spirograph.css">
+		<script type="text/javascript" src="spirograph.js"></script>
+	</head>
+	<body>
+		<canvas id="spirograph"> </canvas>
+		<div id="configuration"> </div>
+		<script>
+			window.onload = function() {
+				var spirograph = new Spirograph({
+					canvasNode: "#spirograph",
+					configurationNode: "#configuration"
+				});
+				spirograph.start();
+			};
+		</script>
+	</body>
+</html>
