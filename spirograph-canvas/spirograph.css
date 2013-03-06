@@ -12,4 +12,12 @@ html, body {
 
 canvas {
 	display: block;
+	height: calc(100% - 200px);
+	width: 100%;
+}
+
+#configuration {
+	display: block;
+	height: 200px;
+	width: 100%;
 }
