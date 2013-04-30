@@ -1,6 +1,6 @@
 # WHAT'S THIS FOR?
 
-It completely wrecks the page you're in. Slowly.
+It completely wrecks the page you're in. Slowly. And painfully. From bottom to top, so you can see the initial words screaming for help.
 
 # WHY?
 
