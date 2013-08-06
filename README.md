@@ -8,3 +8,4 @@ Most of these files will be available at [http://randomjs.alphasmanifesto.com/](
 - [arkanoid-canvas](http://randomjs.alphasmanifesto.com/arkanoid-canvas/arkanoid.html)
 - [rave-canvas](http://randomjs.alphasmanifesto.com/rave-canvas/playing.html)
 - [destroy-me bookmarklet](https://github.com/AlphaGit/random-javascript/tree/master/destroy-me)
+- [jqueryfy bookmarklet](https://github.com/AlphaGit/random-javascript/tree/master/jqueryfy)
