@@ -59,7 +59,7 @@ function DrawableEntityBase(drawingContext, color) {
 	this.color = color;
 
 	this.draw = function() {
-		throw "DrawableEntityBase is an abstract class -- needs an implementation!"
+		throw "DrawableEntityBase is an abstract class -- needs an implementation!";
 	};
 
 	return {
@@ -215,23 +215,40 @@ function ArkanoidPlayer(drawingContext, color, gridCalculator, fps) {
 	};
 
 	var move = function(leftDirection, rightDirection) {
-		self.framesForMovement.left = leftDirection ? self.framesForMovement.left + 1 : 0;
-		self.framesForMovement.right = rightDirection ? self.framesForMovement.right + 1 : 0;
+		var reachLeftLimit = leftDirection && self.cornerX < 0;
+        var reachRightLimit = rightDirection && self.cornerX >= gridCalculator.getRealWidth() - gridCalculator.getBlockWidth();
+ 
+        if (!reachLeftLimit && !reachRightLimit) {
+			self.framesForMovement.left = leftDirection ? self.framesForMovement.left + 1 : 0;
+			self.framesForMovement.right = rightDirection ? self.framesForMovement.right + 1 : 0;
 
-		if (!leftDirection && self.playerSpeed < 0) self.playerSpeed = 0;
-		if (!rightDirection && self.playerSpeed > 0) self.playerSpeed = 0;
+			if (!leftDirection && self.playerSpeed < 0) self.playerSpeed = 0;
+			if (!rightDirection && self.playerSpeed > 0) self.playerSpeed = 0;
 
-		self.playerSpeed += self.framesForMovement.right / fps;
-		self.playerSpeed -= self.framesForMovement.left / fps;
+			self.playerSpeed += self.framesForMovement.right / fps;
+			self.playerSpeed -= self.framesForMovement.left / fps;
 
-		if (self.playerSpeed > 50) self.playerSpeed = 50;
-		if (self.playerSpeed < -50) self.playerSpeed = -50;
+			if (self.playerSpeed > 50) self.playerSpeed = 50;
+			if (self.playerSpeed < -50) self.playerSpeed = -50;
 		
-		self.cornerX += self.playerSpeed;
+			self.cornerX += self.playerSpeed;
+		}
 	};
 
 	var moveTo = function(pos) {
-		self.cornerX = pos - gridCalculator.getBlockWidth() / 2;
+		var reachLeftLimit = gridCalculator.getBlockWidth() / 2 >= pos;
+        var reachRightLimit = gridCalculator.getRealWidth() - gridCalculator.getBlockWidth() / 2 <= pos;
+               
+        if (reachLeftLimit) {
+			// out of bounds to the left: move to left edge
+			self.cornerX = 0;
+		} else if (reachRightLimit) {
+			// out of bounds to the right: move to right edge
+			self.cornerX = gridCalculator.getRealWidth() - gridCalculator.getBlockWidth();
+		} else {
+			// in screen: move to position being pointed at
+			self.cornerX = pos - gridCalculator.getBlockWidth() / 2;
+		}
 	};
 
 	return {
@@ -259,7 +276,7 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 	};
 	self.hitsTaken = 0;
 
-	self.centerBall();	
+	self.centerBall();
 
 	DrawableCircle.call(this, drawingContext, color, radius, self.centerX, self.centerY);
 
@@ -371,7 +388,7 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 			var blockCenterY = bd.y + bd.h / 2;
 
 			var hit = false;
-			if (hitsBlockTop(bd.x, bd.y, bd.h, bd.w)) { 
+			if (hitsBlockTop(bd.x, bd.y, bd.h, bd.w)) {
 				self.movement.dY = speedRelativeToBlockCenter ? (self.centerY - blockCenterY) / DISTANCE_TO_SPEED_RELATION : -Math.abs(self.movement.dY);
 				self.movement.dX = speedRelativeToBlockCenter ? (self.centerX - blockCenterX) / DISTANCE_TO_SPEED_RELATION : self.movement.dX;
 				hit = true;
@@ -389,7 +406,7 @@ function Ball(drawingContext, color, radius, stageHeight, stageWidth) {
 				hit = true;
 			}
 
-			if (hitsBlockRight(bd.x, bd.y, bd.h, bd.w)) { 
+			if (hitsBlockRight(bd.x, bd.y, bd.h, bd.w)) {
 				self.movement.dX = speedRelativeToBlockCenter ? (self.centerX - blockCenterX) / DISTANCE_TO_SPEED_RELATION : Math.abs(self.movement.dX);
 				self.movement.dY = speedRelativeToBlockCenter ? (self.centerY - blockCenterY) / DISTANCE_TO_SPEED_RELATION : self.movement.dY;
 				hit = true;
@@ -438,8 +455,8 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 
 			var block = new TargetBlock(drawingContext, "rgb(" + difficultyRanking + ", 0, 0)", gridCalculator, row, column, difficultyRanking);
 			targetBlocks.push(block);
-		};
-	};
+		}
+	}
 
 	self.pressedKeys = {
 		leftArrow: false,
@@ -536,7 +553,7 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 		drawingContext.clearRect(0, 0, gridCalculator.getRealWidth(), gridCalculator.getRealHeight());
 		drawControls();
 
-		var targetBlockIndex = 0; 
+		var targetBlockIndex = 0;
 		while (targetBlockIndex < targetBlocks.length) {
 			var tb = targetBlocks[targetBlockIndex];
 			if (tb.isToBeDestroyed()) {
@@ -555,7 +572,7 @@ function ArkanoidGame(drawingContext, gridCalculator, fps) {
 			pause();
 			showBigMessage("Game over", "Refresh to play again.");
 		}
-		if (targetBlocks.length == 0) {
+		if (targetBlocks.length === 0) {
 			pause();
 			showBigMessage("You won!", "And you scored " + self.currentScore + " points!");
 		}
