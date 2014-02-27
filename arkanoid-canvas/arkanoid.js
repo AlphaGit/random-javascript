@@ -239,7 +239,14 @@ function ArkanoidPlayer(drawingContext, color, gridCalculator, fps) {
 		var reachLeftLimit = gridCalculator.getBlockWidth() / 2 >= pos;
         var reachRightLimit = gridCalculator.getRealWidth() - gridCalculator.getBlockWidth() / 2 <= pos;
                
-        if (!reachLeftLimit && !reachRightLimit) {
+        if (reachLeftLimit) {
+			// out of bounds to the left: move to left edge
+			self.cornerX = 0;
+		} else if (reachRightLimit) {
+			// out of bounds to the right: move to right edge
+			self.cornerX = gridCalculator.getRealWidth() - gridCalculator.getBlockWidth();
+		} else {
+			// in screen: move to position being pointed at
 			self.cornerX = pos - gridCalculator.getBlockWidth() / 2;
 		}
 	};
