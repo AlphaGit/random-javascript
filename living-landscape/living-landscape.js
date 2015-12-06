@@ -121,12 +121,26 @@ function colorForTime(secondsSinceMidnight) {
   }
 }
 
+//TODO remove
+function getHourTemplate(hour, minute, colorSpec) {
+  var rgb = "rgb(" + colorSpec.red + ", " + colorSpec.green + ", " + colorSpec.blue + ")";
+  var timeText = hour + ":" + (minute || "00");
+
+  var html = '<div style="background-color: ' + rgb + ';">';
+  html += '<p>'
+  html += timeText;
+  html += ' [' + color.red + ', ' + color.green + ', ' + color.blue + '] ('+ color.temperature +'K)';
+  html += '</p></div>';
+
+  return html;
+}
+
 // TODO remove
 for (var hour = 4; hour < 21; hour++) {
   for (var minute = 0; minute < 60; minute += 15) {
     var secondsSinceMidnight = 60 * minute + 3600 * hour;
     var color = colorForTime(secondsSinceMidnight);
-    var rgb = "rgb(" + color.red + ", " + color.green + ", " + color.blue + ")";
-    document.write('<p style="background-color: ' + rgb + ';">Time: ' + hour + ":" + (minute || "00") + " [" + color.red + ", " + color.green + ", " + color.blue + "] ("+ color.temperature +"K)</p>");
+    
+    document.write(getHourTemplate(hour, minute, color));
   }
 }
