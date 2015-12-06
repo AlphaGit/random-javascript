@@ -146,9 +146,9 @@ function colorForTime(secondsSinceMidnight) {
       var blueDiff = Math.abs(currentTemperatureColor.blue - tempRange.mixWith.blue);
 
       return {
-        red: Math.round(minRed + redDiff * closenessToFinalTemp),
-        green: Math.round(minGreen + greenDiff * closenessToFinalTemp),
-        blue: Math.round(minBlue + blueDiff * closenessToFinalTemp),
+        red: tempRange.mixWith.red == null ? currentTemperatureColor.red : Math.round(minRed + redDiff * closenessToFinalTemp),
+        green: tempRange.mixWith.green == null ? currentTemperatureColor.green : Math.round(minGreen + greenDiff * closenessToFinalTemp),
+        blue: tempRange.mixWith.blue == null ? currentTemperatureColor.blue : Math.round(minBlue + blueDiff * closenessToFinalTemp),
         temperature: currentTemperature
       };
     case 'fadeOut':
@@ -163,9 +163,9 @@ function colorForTime(secondsSinceMidnight) {
       var blueDiff = Math.abs(currentTemperatureColor.blue - tempRange.mixWith.blue);
 
       return {
-        red: Math.round(minRed + redDiff * closenessToInitialTemp),
+        red: tempRange.mixWith.red == null ? currentTemperatureColor.red : Math.round(minRed + redDiff * closenessToInitialTemp),
         green: tempRange.mixWith.green == null ? currentTemperatureColor.green : Math.round(minGreen + greenDiff * closenessToInitialTemp),
-        blue: Math.round(minBlue + blueDiff * closenessToInitialTemp),
+        blue: tempRange.mixWith.blue == null ? currentTemperatureColor.blue : Math.round(minBlue + blueDiff * closenessToInitialTemp),
         temperature: currentTemperature
       };      
   }
