@@ -29,7 +29,7 @@ function show15MinuteIntervals() {
   clearCurrentDisplay();
   var body = document.querySelector('body');
 
-  for (var hour = 4; hour < 21; hour++) {
+  for (var hour = 3; hour < 21; hour++) {
     for (var minute = 0; minute < 60; minute += 15) {
       var secondsSinceMidnight = 60 * minute + 3600 * hour;
       var color = colorForTime(secondsSinceMidnight);

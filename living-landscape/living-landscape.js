@@ -64,19 +64,19 @@ function rgbFromTemperature(kelvinTemperature) {
   return { red: Math.round(red) || 0, blue: Math.round(blue) || 0, green: Math.round(green) || 0, temperature: kelvinTemperature };
 }
 
-var mixWith_replaceWithBlack = { red: 0   , green: 0   , blue: 0   , method: 'replace' };
-var mixWith_fadeIntoRed =      { red: 150 , green: 0   , blue: 0   , method: 'fadeIn'  };
-var mixWith_fadeFromPurple =   { red: 100 , green: null, blue: 75  , method: 'fadeOut' };
+var mixWith_replaceWithBlack = { red: 0   , green: 0   , blue: 0   , method: 'replace'                                                            };
+var mixWith_blackIntoRed     = { red: 226 , green: 65  , blue: 0   , method: 'noTempLinear', initialRed: 0  , initialGreen: 0  , initialBlue: 0   };
+var mixWith_fadeIntoPurple   = { red: 80  , green: 0   , blue: 100 , method: 'fadeIn'                                                             };
+var mixWith_purpleToBlack    = { red: 0   , green: 0   , blue: 0   , method: 'noTempLinear', initialRed: 80 , initialGreen: 0  , initialBlue: 100 };
 
 var temperatureRanges = [
   { fromTime: 0   /* 12 AM */, toTime: 180 /*  5 AM */, fromTemp: 0    , toTemp: 1    , mixWith: mixWith_replaceWithBlack },
-  { fromTime: 180 /*  5 AM */, toTime: 216 /*  6 AM */, fromTemp: 1    , toTemp: 3000 , mixWith: mixWith_fadeIntoRed      },
+  { fromTime: 180 /*  5 AM */, toTime: 216 /*  6 AM */, fromTemp: 1    , toTemp: 3000 , mixWith: mixWith_blackIntoRed     },
   { fromTime: 216 /*  6 AM */, toTime: 324 /*  9 AM */, fromTemp: 3000 , toTemp: 30000, mixWith: null                     },
   { fromTime: 324 /*  9 AM */, toTime: 432 /* 12 PM */, fromTemp: 30000, toTemp: 40000, mixWith: null                     },
   { fromTime: 432 /* 12 PM */, toTime: 612 /*  5 PM */, fromTemp: 40000, toTemp: 30000, mixWith: null                     },
-  { fromTime: 612 /*  5 PM */, toTime: 648 /*  6 PM */, fromTemp: 30000, toTemp: 3000 , mixWith: null                     },
-  { fromTime: 648 /*  6 PM */, toTime: 684 /*  7 PM */, fromTemp: 3000 , toTemp: 1500 , mixWith: null                     },
-  { fromTime: 684 /*  7 PM */, toTime: 720 /*  8 PM */, fromTemp: 1500 , toTemp: 1    , mixWith: mixWith_fadeFromPurple   },
+  { fromTime: 612 /*  5 PM */, toTime: 648 /*  6 PM */, fromTemp: 30000, toTemp: 20000, mixWith: mixWith_fadeIntoPurple   },
+  { fromTime: 648 /*  6 PM */, toTime: 720 /*  8 PM */, fromTemp: 1000 , toTemp: 3000 , mixWith: mixWith_purpleToBlack    },
   { fromTime: 720 /*  8 PM */, toTime: 864 /* 12 AM */, fromTemp: 1    , toTemp: 0    , mixWith: mixWith_replaceWithBlack }
 ];
 
@@ -115,6 +115,10 @@ function calculateProportionalTemperatureForRange(tempRange, hundredsOfSecondsSi
   return tempOffset + tempRange.fromTemp; 
 }
 
+function weightedAverage(firstValue, secondValue, indexFromFirstToSecond) {
+  return Math.round(firstValue * (1 - indexFromFirstToSecond) + secondValue * indexFromFirstToSecond);
+}
+
 function colorForTime(secondsSinceMidnight) {
   var hundredsOfSeconds = secondsSinceMidnight / 100;
 
@@ -135,38 +139,56 @@ function colorForTime(secondsSinceMidnight) {
         temperature: currentTemperature
       };
     case 'fadeIn':
-      var closenessToFinalTemp = Math.min(1, currentTemperature / tempRange.toTemp); // 0 to 1: closest to 1 => closest to final temp
-      
-      var minRed = Math.min(currentTemperatureColor.red, tempRange.mixWith.red);
-      var minGreen = Math.min(currentTemperatureColor.green, tempRange.mixWith.green);
-      var minBlue = Math.min(currentTemperatureColor.blue, tempRange.mixWith.blue);
+      // 0 to 1: closest to 1 => closest to final temp
+      var closenessToFinalTemp = (currentTemperature - tempRange.fromTemp) / (tempRange.toTemp - tempRange.fromTemp);
 
-      var redDiff = Math.abs(currentTemperatureColor.red - tempRange.mixWith.red);
-      var greenDiff = Math.abs(currentTemperatureColor.green - tempRange.mixWith.green);
-      var blueDiff = Math.abs(currentTemperatureColor.blue - tempRange.mixWith.blue);
+      var mixedRed = weightedAverage(currentTemperatureColor.red, tempRange.mixWith.red, closenessToFinalTemp);
+      var mixedGreen = weightedAverage(currentTemperatureColor.green, tempRange.mixWith.green, closenessToFinalTemp);
+      var mixedBlue = weightedAverage(currentTemperatureColor.blue, tempRange.mixWith.blue, closenessToFinalTemp);
 
       return {
-        red: tempRange.mixWith.red == null ? currentTemperatureColor.red : Math.round(minRed + redDiff * closenessToFinalTemp),
-        green: tempRange.mixWith.green == null ? currentTemperatureColor.green : Math.round(minGreen + greenDiff * closenessToFinalTemp),
-        blue: tempRange.mixWith.blue == null ? currentTemperatureColor.blue : Math.round(minBlue + blueDiff * closenessToFinalTemp),
+        red: tempRange.mixWith.red == null ? currentTemperatureColor.red : mixedRed,
+        green: tempRange.mixWith.green == null ? currentTemperatureColor.green : mixedGreen,
+        blue: tempRange.mixWith.blue == null ? currentTemperatureColor.blue : mixedBlue,
         temperature: currentTemperature
       };
     case 'fadeOut':
-      var closenessToInitialTemp = Math.min(currentTemperature / tempRange.fromTemp); // 0 to 1: closest to 1 => closest to initial temp
+      // 0 to 1: closest to 1 => closest to initial temp
+      var closenessToInitialTemp = (currentTemperature - tempRange.fromTemp) / (tempRange.toTemp - tempRange.fromTemp);
 
-      var minRed = Math.min(currentTemperatureColor.red, tempRange.mixWith.red);
-      var minGreen = Math.min(currentTemperatureColor.green, tempRange.mixWith.green);
-      var minBlue = Math.min(currentTemperatureColor.blue, tempRange.mixWith.blue);
-
-      var redDiff = Math.abs(currentTemperatureColor.red - tempRange.mixWith.red);
-      var greenDiff = Math.abs(currentTemperatureColor.green - tempRange.mixWith.green);
-      var blueDiff = Math.abs(currentTemperatureColor.blue - tempRange.mixWith.blue);
+      var mixedRed = weightedAverage(tempRange.mixWith.red, currentTemperatureColor.red, closenessToInitialTemp);
+      var mixedGreen = weightedAverage(tempRange.mixWith.green, currentTemperatureColor.green, closenessToInitialTemp);
+      var mixedBlue = weightedAverage(tempRange.mixWith.blue, currentTemperatureColor.blue, closenessToInitialTemp);
 
       return {
-        red: tempRange.mixWith.red == null ? currentTemperatureColor.red : Math.round(minRed + redDiff * closenessToInitialTemp),
-        green: tempRange.mixWith.green == null ? currentTemperatureColor.green : Math.round(minGreen + greenDiff * closenessToInitialTemp),
-        blue: tempRange.mixWith.blue == null ? currentTemperatureColor.blue : Math.round(minBlue + blueDiff * closenessToInitialTemp),
+        red: tempRange.mixWith.red == null ? currentTemperatureColor.red : mixedRed,
+        green: tempRange.mixWith.green == null ? currentTemperatureColor.green : mixedGreen,
+        blue: tempRange.mixWith.blue == null ? currentTemperatureColor.blue : mixedBlue,
         temperature: currentTemperature
       };      
+    case 'average':
+      var mixedRed = weightedAverage(tempRange.mixWith.red, currentTemperatureColor.red, 0.5);
+      var mixedGreen = weightedAverage(tempRange.mixWith.green, currentTemperatureColor.green, 0.5);
+      var mixedBlue = weightedAverage(tempRange.mixWith.blue, currentTemperatureColor.blue, 0.5);
+
+      return {
+        red: tempRange.mixWith.red == null ? currentTemperatureColor.red : mixedRed,
+        green: tempRange.mixWith.green == null ? currentTemperatureColor.green : mixedGreen,
+        blue: tempRange.mixWith.blue == null ? currentTemperatureColor.blue : mixedBlue,
+        temperature: currentTemperature
+      };
+    case 'noTempLinear':
+      var closenessToFinalTime = (hundredsOfSeconds - tempRange.fromTime) / (tempRange.toTime - tempRange.fromTime);
+
+      var mixedRed = weightedAverage(tempRange.mixWith.initialRed, tempRange.mixWith.red, closenessToFinalTime);
+      var mixedGreen = weightedAverage(tempRange.mixWith.initialGreen, tempRange.mixWith.green, closenessToFinalTime);
+      var mixedBlue = weightedAverage(tempRange.mixWith.initialBlue, tempRange.mixWith.blue, closenessToFinalTime);
+
+      return {
+        red: mixedRed,
+        green: mixedGreen,
+        blue: mixedBlue,
+        temperature: null
+      };
   }
 }
