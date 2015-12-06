@@ -17,6 +17,12 @@ div {
 	padding-top: 10px;
 }
 
+	div.pixel {
+		float: left;
+		width: 1px;
+		height: 100%;
+	}
+
 p {
 	margin-bottom: 0;
 	margin-top: 0;
@@ -24,3 +30,17 @@ p {
 	transform: translate(1.25em) rotate(90deg);
 	transform-origin: top left;
 }
+
+button {
+	position: absolute;
+	left: 10px;
+	z-index: 10;
+}
+
+	button#btnShow15MinuteIntervals {
+		top: 10px;
+	}
+
+	button#btnShow1MinuteIntervals {
+		top: 40px;
+	}

@@ -170,27 +170,3 @@ function colorForTime(secondsSinceMidnight) {
       };      
   }
 }
-
-//TODO remove
-function getHourTemplate(hour, minute, colorSpec) {
-  var rgb = "rgb(" + colorSpec.red + ", " + colorSpec.green + ", " + colorSpec.blue + ")";
-  var timeText = hour + ":" + (minute || "00");
-
-  var html = '<div style="background-color: ' + rgb + ';">';
-  html += '<p>'
-  html += timeText;
-  html += ' [' + color.red + ', ' + color.green + ', ' + color.blue + '] ('+ Math.round(color.temperature*1000)/1000 +'K)';
-  html += '</p></div>';
-
-  return html;
-}
-
-// TODO remove
-for (var hour = 4; hour < 21; hour++) {
-  for (var minute = 0; minute < 60; minute += 15) {
-    var secondsSinceMidnight = 60 * minute + 3600 * hour;
-    var color = colorForTime(secondsSinceMidnight);
-    
-    document.write(getHourTemplate(hour, minute, color));
-  }
-}
