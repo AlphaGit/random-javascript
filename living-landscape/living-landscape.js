@@ -179,7 +179,7 @@ function getHourTemplate(hour, minute, colorSpec) {
   var html = '<div style="background-color: ' + rgb + ';">';
   html += '<p>'
   html += timeText;
-  html += ' [' + color.red + ', ' + color.green + ', ' + color.blue + '] ('+ color.temperature +'K)';
+  html += ' [' + color.red + ', ' + color.green + ', ' + color.blue + '] ('+ Math.round(color.temperature, 3) +'K)';
   html += '</p></div>';
 
   return html;
