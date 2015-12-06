@@ -41,6 +41,10 @@ function show15MinuteIntervals() {
   }  
 }
 
+function goToDemoPage() {
+  window.location.href = 'demo.html';
+}
+
 function show1MinuteIntervals() {
   clearCurrentDisplay();
   var body = document.querySelector('body');
@@ -57,21 +61,14 @@ function show1MinuteIntervals() {
   }
 }
 
-// courtesy of youmightnotneedjquery.com
-function ready(fn) {
-  if (document.readyState != 'loading'){
-    fn();
-  } else {
-    document.addEventListener('DOMContentLoaded', fn);
-  }
-}
-
 function attachEvents() {
   var btnShow15MinuteIntervals = document.getElementById('btnShow15MinuteIntervals');
   var btnShow1MinuteIntervals = document.getElementById('btnShow1MinuteIntervals');
+  var btnSeeItInAction = document.getElementById('btnSeeItInAction');
 
   btnShow15MinuteIntervals.addEventListener('click', show15MinuteIntervals);
   btnShow1MinuteIntervals.addEventListener('click', show1MinuteIntervals);
+  btnSeeItInAction.addEventListener('click', goToDemoPage);
 }
 
 function parseOutermostElementFromTemplate(str) {

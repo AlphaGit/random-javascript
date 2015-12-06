@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Living landscape demo</title>
+		<style>
+			body, html {
+				background-color: black;
+			}
+			img, input {
+				width: 100%;
+			}
+		</style>
+		<script src="utils.js"></script>
+		<script src="living-landscape.js"></script>
+	</head>
+	<body>
+		<img src="DBanner.png" id="banner" />
+		<input type="range" id="timeToShow" min="0" max="86400" autofocus />
+
+		<script>
+			var timeToShowInput;
+
+			function setColorForSecondsSinceMidnight(secondsSinceMidnight) {
+				var colorToUse = colorForTime(secondsSinceMidnight);
+				var colorString = 'rgb(' + colorToUse.red + ', ' + colorToUse.green + ', ' + colorToUse.blue + ')';
+				document.getElementById('banner').style.backgroundColor = colorString;
+			}
+
+			function useTimeFromInput() {
+				setColorForSecondsSinceMidnight(timeToShowInput.value)
+			}
+
+			function moveCurrentTime(evt) {
+				var slidingTime = 15 * 60; // 15 minutes
+				switch(evt.which) {
+					case 37: // left arrow
+					case 40: // down arrow
+						timeToShowInput.value = +timeToShowInput.value - slidingTime;
+						setColorForSecondsSinceMidnight(timeToShowInput.value);
+						break;
+					case 38: // up arrow
+					case 39: // right arrow
+						timeToShowInput.value = +timeToShowInput.value + slidingTime;
+						setColorForSecondsSinceMidnight(timeToShowInput.value);
+						break;
+				}
+			}
+
+			ready(function() {
+				var currentTime = new Date();
+				var today = new Date();
+				today.setHours(0, 0, 0, 0);
+
+				var secondsSinceMidnight = (currentTime - today) / 1000;
+
+				setColorForSecondsSinceMidnight(secondsSinceMidnight);
+
+				timeToShowInput = document.getElementById('timeToShow');
+				timeToShowInput.value = secondsSinceMidnight;
+
+				timeToShowInput.addEventListener('input', useTimeFromInput);
+				timeToShowInput.addEventListener('keydown', moveCurrentTime);
+			});
+		</script>
+	</body>
+</html>
