@@ -61,32 +61,38 @@ function rgbFromTemperature(kelvinTemperature) {
     }
   }
 
-  return { red: Math.round(red), blue: Math.round(blue), green: Math.round(green), temperature: kelvinTemperature };
+  return { red: Math.round(red) || 0, blue: Math.round(blue) || 0, green: Math.round(green) || 0, temperature: kelvinTemperature };
 }
 
-var thousandKColor = rgbFromTemperature(1000);
-function colorForTime(secondsSinceMidnight) {
-  var hundredsOfSeconds = secondsSinceMidnight / 100;
+var mixWith_replaceWithBlack = { red: 0  , green: 0  , blue: 0  , method: 'replace' };
+var mixWith_fadeIntoRed =      { red: 0  , green: 0  , blue: 0  , method: 'fadeIn'  };
 
-  var temperatureRanges = [
-    { fromTime: 0   /* 12 AM */, toTime: 180 /*  5 AM */, fromTemp: 0    , toTemp: 1    , fadeToR: 0    , fadeToG: 0   , fadeToB: 0    },
-    { fromTime: 180 /*  5 AM */, toTime: 216 /*  6 AM */, fromTemp: 1    , toTemp: 3000 , fadeToR: 0    , fadeToG: 0   , fadeToB: 0    },
-    { fromTime: 216 /*  6 AM */, toTime: 324 /*  9 AM */, fromTemp: 3000 , toTemp: 30000, fadeToR: null , fadeToG: null, fadeToB: null },
-    { fromTime: 324 /*  9 AM */, toTime: 432 /* 12 PM */, fromTemp: 30000, toTemp: 40000, fadeToR: null , fadeToG: null, fadeToB: null },
-    { fromTime: 432 /* 12 PM */, toTime: 612 /*  5 PM */, fromTemp: 40000, toTemp: 30000, fadeToR: null , fadeToG: null, fadeToB: null },
-    { fromTime: 612 /*  5 PM */, toTime: 648 /*  6 PM */, fromTemp: 30000, toTemp: 3000 , fadeToR: null , fadeToG: null, fadeToB: null },
-    { fromTime: 648 /*  6 PM */, toTime: 720 /*  8 PM */, fromTemp: 3000 , toTemp: 1    , fadeToR: 0    , fadeToG: 0   , fadeToB: 0    },
-    { fromTime: 720 /*  8 PM */, toTime: 864 /* 12 AM */, fromTemp: 1    , toTemp: 0    , fadeToR: 0    , fadeToG: 0   , fadeToB: 0    }
-  ];
+var temperatureRanges = [
+  { fromTime: 0   /* 12 AM */, toTime: 180 /*  5 AM */, fromTemp: 0    , toTemp: 1    , mixWith: mixWith_replaceWithBlack },
+  { fromTime: 180 /*  5 AM */, toTime: 216 /*  6 AM */, fromTemp: 1    , toTemp: 3000 , mixWith: mixWith_fadeIntoRed      },
+  { fromTime: 216 /*  6 AM */, toTime: 324 /*  9 AM */, fromTemp: 3000 , toTemp: 30000, mixWith: null                     },
+  { fromTime: 324 /*  9 AM */, toTime: 432 /* 12 PM */, fromTemp: 30000, toTemp: 40000, mixWith: null                     },
+  { fromTime: 432 /* 12 PM */, toTime: 612 /*  5 PM */, fromTemp: 40000, toTemp: 30000, mixWith: null                     },
+  { fromTime: 612 /*  5 PM */, toTime: 648 /*  6 PM */, fromTemp: 30000, toTemp: 3000 , mixWith: null                     },
+  { fromTime: 648 /*  6 PM */, toTime: 720 /*  8 PM */, fromTemp: 3000 , toTemp: 1    , mixWith: mixWith_fadeIntoRed      },
+  { fromTime: 720 /*  8 PM */, toTime: 864 /* 12 AM */, fromTemp: 1    , toTemp: 0    , mixWith: mixWith_replaceWithBlack }
+];
 
+function findTemperatureRangeForTime(hundredsOfSecondsSinceMidnight) {
   var i = 0;
 
+  var tempRange;
   do {
-    var tempRange = temperatureRanges[i++];
-    if (tempRange.fromTime <= hundredsOfSeconds && hundredsOfSeconds <= tempRange.toTime)
+    tempRange = temperatureRanges[i];
+    if (tempRange.fromTime <= hundredsOfSecondsSinceMidnight && hundredsOfSecondsSinceMidnight <= tempRange.toTime)
       break;
+    i++;
   } while (i < temperatureRanges.length);
 
+  return (i < temperatureRanges.length) ? tempRange : null;
+}
+
+function calculateProportionalTemperatureForRange(tempRange, hundredsOfSecondsSinceMidnight) {
   // my middle school math notes, hehe...
   //       250
   // 216 ----- 324
@@ -102,22 +108,48 @@ function colorForTime(secondsSinceMidnight) {
 
   var tempDiff = tempRange.toTemp - tempRange.fromTemp;
   var timeDiff = tempRange.toTime - tempRange.fromTime;
-  var actualTimeDiff = hundredsOfSeconds - tempRange.fromTime;
+  var actualTimeDiff = hundredsOfSecondsSinceMidnight - tempRange.fromTime;
   var tempOffset = actualTimeDiff * tempDiff / timeDiff;
-  var temperatureInKelvin = tempOffset + tempRange.fromTemp;
+  return tempOffset + tempRange.fromTemp; 
+}
 
-  var currentTemperatureColor = rgbFromTemperature(temperatureInKelvin);
-  if (tempRange.fadeToR == null && tempRange.fadeToG == null && tempRange.fadeToB == null) {
+function colorForTime(secondsSinceMidnight) {
+  var hundredsOfSeconds = secondsSinceMidnight / 100;
+
+  var tempRange = findTemperatureRangeForTime(hundredsOfSeconds);
+  var currentTemperature = calculateProportionalTemperatureForRange(tempRange, hundredsOfSeconds);
+
+  var currentTemperatureColor = rgbFromTemperature(currentTemperature);
+  if (tempRange.mixWith == null) {
     return currentTemperatureColor;
-  } else {
-    var maxTempForRange = Math.max(tempRange.fromTemp, tempRange.toTemp);
-    // TODO mix considering fadeToR, fadeToG, fadeToB
-    return {
-      red: Math.round(currentTemperatureColor.red * (temperatureInKelvin / maxTempForRange)),
-      green: Math.round(currentTemperatureColor.green * (temperatureInKelvin / maxTempForRange)),
-      blue: Math.round(currentTemperatureColor.blue * (temperatureInKelvin / maxTempForRange)),
-      temperature: temperatureInKelvin
-    };
+  }
+
+  switch(tempRange.mixWith.method) {
+    case 'replace': 
+      return {
+        red: tempRange.mixWith.red,
+        green: tempRange.mixWith.green,
+        blue: tempRange.mixWith.blue,
+        temperature: currentTemperature
+      };
+    case 'fadeIn':
+      var maxTempForRange = Math.max(tempRange.fromTemp, tempRange.toTemp);
+      var closenessToMaxTemp = currentTemperature / maxTempForRange; // 0 to 1: closest to 1 => closest to max temp
+      
+      var minRed = Math.min(currentTemperatureColor.red, tempRange.mixWith.red);
+      var minGreen = Math.min(currentTemperatureColor.green, tempRange.mixWith.green);
+      var minBlue = Math.min(currentTemperatureColor.blue, tempRange.mixWith.blue);
+
+      var redDiff = Math.abs(currentTemperatureColor.red - tempRange.mixWith.red);
+      var greenDiff = Math.abs(currentTemperatureColor.green - tempRange.mixWith.green);
+      var blueDiff = Math.abs(currentTemperatureColor.blue - tempRange.mixWith.blue);
+
+      return {
+        red: Math.round(minRed + redDiff * closenessToMaxTemp),
+        green: Math.round(minGreen * greenDiff * closenessToMaxTemp),
+        blue: Math.round(minBlue * blueDiff * closenessToMaxTemp),
+        temperature: currentTemperature
+      };
   }
 }
 
