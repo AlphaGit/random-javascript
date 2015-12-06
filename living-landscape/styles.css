@@ -21,6 +21,6 @@ p {
 	margin-bottom: 0;
 	margin-top: 0;
 	width: 600px;
-	transform: rotate(90deg);
+	transform: translate(1.25em) rotate(90deg);
 	transform-origin: top left;
 }
