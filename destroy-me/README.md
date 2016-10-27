@@ -10,6 +10,6 @@ Because we can-can-can!
 
 Create a new bookmark with this address:
 
-    javascript:var%20s=document.createElement('script');s.src='https://raw.github.com/AlphaGit/random-javascript/master/destroy-me/destroyme.js';document.getElementsByTagName('head')[0].appendChild(s);
+    javascript:var s=document.createElement('script');s.src='https://cdn.rawgit.com/AlphaGit/random-javascript/master/destroy-me/destroyme.js';document.getElementsByTagName('head')[0].appendChild(s);
     
 Save it on your bookmark bar and hit it on any page. Have fun. And stop screaming please, I have a headache.
